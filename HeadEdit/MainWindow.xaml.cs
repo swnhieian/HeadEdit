@@ -25,14 +25,44 @@ namespace HeadEdit
     {
         private Calibration calibration;
         private Ellipse headEllipse;
+        private PopupController popupController;
+        private Point currentCursor;
         //flag
-        private bool MoveFlag = false;
-        private bool EditFlag = false;
+        private bool moveFlag = false;
+        private bool editFlag = false;
 
         TextRange HeadSelectRange;
+
+        public bool EditFlag
+        {
+            get
+            {
+                return editFlag;
+            }
+
+            set
+            {
+                editFlag = value;
+            }
+        }
+
+        public Ellipse HeadEllipse
+        {
+            get
+            {
+                return headEllipse;
+            }
+
+            set
+            {
+                headEllipse = value;
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
+            
             //start a background thread which can receive head position from server
             Thread headPositionThread = new Thread(() =>
             {
@@ -45,41 +75,55 @@ namespace HeadEdit
                 headPositionThread.Start();
             }
             //initalize some variables
+            currentCursor = new Point(0, 0);
+            popupController = new PopupController(this);
+            richTextBox.FontSize = Config.richTextBoxFontSize;
             calibration = new Calibration();
-            headEllipse = new Ellipse()
+            HeadEllipse = new Ellipse()
             {
                 Width = 200,
                 Height = 200,
                 Stroke = new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)),
                 StrokeThickness=2
             };
-            headEllipse.Visibility = Config.debug ? Visibility.Visible : Visibility.Hidden;
+            HeadEllipse.Visibility = Config.debug ? Visibility.Visible : Visibility.Hidden;
             
-            
-            mainCanvas.Children.Add(headEllipse);
+            mainCanvas.Children.Add(HeadEllipse);
             if (Config.useCamera)
             {
                 calibration.startCalibrate();    //first calibration before use
             }
+            richTextBox.Focus();
+            richTextBox.CaretPosition = richTextBox.Document.ContentEnd;
         }
         private void handleHeadPosition(Object para)
         {
             Point headPos = calibration.parsePoint((Point)para);
-            Point headToCanvasPos = headPosToCanvasPos(headPos);
-            if (MoveFlag == false && EditFlag == false)
-            {                
-                Canvas.SetLeft(headEllipse, headToCanvasPos.X - headEllipse.Width / 2);
-                Canvas.SetTop(headEllipse, headToCanvasPos.Y - headEllipse.Height / 2);
+            currentCursor = headPosToCanvasPos(headPos);
+            updateInterface();
+        }
+        public void matchString(String input)
+        {
+
+        }
+        private void updateInterface()
+        {
+            if (moveFlag == false && EditFlag == false)
+            {
+                Canvas.SetLeft(HeadEllipse, currentCursor.X - HeadEllipse.Width / 2);
+                Canvas.SetTop(HeadEllipse, currentCursor.Y - HeadEllipse.Height / 2);
             }
-            else if(MoveFlag == true)
+            else if (moveFlag == true)
             {
                 //done
-                var InsertPos= richTextBox.GetPositionFromPoint(headToCanvasPos, true);
+                var InsertPos = richTextBox.GetPositionFromPoint(currentCursor, true);
                 richTextBox.CaretPosition = InsertPos;
-                MoveFlag = false;
+                moveFlag = false;
             }
             else if (EditFlag == true)
             {
+                popupController.pop(currentCursor);
+                /*
                 if (InputBox.Visibility!=Visibility.Visible)
                 {
                     HeadSelectRange = HeadSelectRangeWay(headToCanvasPos);  // to do
@@ -89,12 +133,10 @@ namespace HeadEdit
                     SetBoxPos(headToCanvasPos);                               //to do
                     //Focus on the InputBox
                     InputBox.Focus();
-                }
+                }*/
                 //
                 //TextRange SelectWordsRange= SearchKeyWord(HeadSelectRange, InputBox.Text);
             }
-            
-            
         }
         
         private Point headPosToCanvasPos(Point headPos)
@@ -151,18 +193,20 @@ namespace HeadEdit
                 e.Handled = true;
             } else if (e.Key == Config.moveKey)
             {
-                MoveFlag = true;
+                moveFlag = true;
+                updateInterface();
                 e.Handled = true;
             } else if (e.Key == Config.editKey)
             {
                 EditFlag = true;
+                updateInterface();
                 e.Handled = true;
             } else if (e.Key == Config.cancelKey)
             {
                 //return to raw pattern
-                MoveFlag = false;
+                moveFlag = false;
                 EditFlag = false;
-
+                updateInterface();
                 //return to the end of the richtextbox
                 richTextBox.Focus();
                 richTextBox.CaretPosition = richTextBox.Document.ContentEnd;
