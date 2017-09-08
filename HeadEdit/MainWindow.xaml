@@ -5,8 +5,37 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HeadEdit"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="750" Width="825" MouseMove="Window_MouseMove" KeyDown="Window_KeyDown" >
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="15*"/>
+            <ColumnDefinition Width="484*"/>
+            <ColumnDefinition Width="15*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36*"/>
+            <RowDefinition Height="256*"/>
+            <RowDefinition Height="27*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Column="0" x:Name="col0" Grid.ColumnSpan="1" />
+        <Grid Grid.Column="1" x:Name="col1" Grid.ColumnSpan="1" >
+            
+        </Grid>
+        <Grid Grid.Row="0" x:Name="row0" Grid.ColumnSpan="1" />
+        <Grid Grid.Row="1" x:Name="row1" Grid.ColumnSpan="1" />
+        <TextBox x:Name="InputBox"  Height="23"   Width="120" Visibility="Hidden"/>
+        <Canvas Name="mainCanvas"  Grid.Row="1" Grid.Column="1" >
+            <RichTextBox x:Name="richTextBox" FontFamily="Microsoft YaHei"  Height="{Binding ElementName=row1,Path=ActualHeight}" Width="{Binding ElementName=col1,Path=ActualWidth}"
+                              FontSize="30" Foreground="Black"  Grid.Row="1" Grid.Column="1"  Block.LineHeight="1" >
+                <FlowDocument>
+                    <Paragraph>
+                        <Run Text="Since the release of the first novel, Harry Potter and the Philosopher's Stone, on 26 June 1997, the books have found immense popularity, critical acclaim and commercial success worldwide. They have attracted a wide adult audience as well as younger readers, and are often considered cornerstones of modern young adult literature.[2] The series has also had its share of criticism, including concern about the increasingly dark tone as the series progressed, as well as the often gruesome and graphic violence it depicts. As of May 2013, the books have sold more than 500 million "/>
+                        <Run Background="White" Text="copies "/>
+                        <Run Text="worldwide, making them the best-selling book series in history, and have been translated into seventy-three languages.[3][4] The last four books consecutively set records as the fastest-selling books in history, with the final instalment selling roughly eleven million copies in the United States within twenty-four hours of its release."/>
+                    </Paragraph>
+                </FlowDocument>
+            </RichTextBox>
+        </Canvas>
+
     </Grid>
 </Window>
