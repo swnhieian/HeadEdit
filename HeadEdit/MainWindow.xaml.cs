@@ -31,7 +31,12 @@ namespace HeadEdit
         private bool moveFlag = false;
         private bool editFlag = false;
 
-        TextRange HeadSelectRange;
+        public TextRange HeadSelectRange;
+        public List<TextRange> SplitWordsRange;
+        public List<TextRange> HighLightRange;
+        public int NowChoice = 0;
+        public string NowChoiceString;
+
 
         public bool EditFlag
         {
@@ -104,7 +109,70 @@ namespace HeadEdit
         }
         public void matchString(String input)
         {
+            //Remove font property of last HighLightRange
+            if (HighLightRange!=null && HighLightRange.Count > 0)
+            {
+                for (int i = 0; i < HighLightRange.Count; i++)
+                {
+                    SetFontColor(Config.DefaultFontColor, HighLightRange[i]);
+                }
+            }
+            //if no input,return
+            if (HeadSelectRange == null || input == null)
+            {
+                return;
+            }
+            if (input == "") return ;
 
+            string text = HeadSelectRange.Text;
+            //find the match range
+            HighLightRange = FindString(text, input);
+            //highlight
+            for(int i = 0; i < HighLightRange.Count; i++)
+            {
+                SetFontColor(Config.FontColor, HighLightRange[i]);
+            }
+            //default choice:0
+            NowChoice = 0;
+            //remember raw text
+            NowChoiceString = HighLightRange[NowChoice].Text;
+            //PreView of the input
+            HighLightRange[NowChoice].Text = input;
+            //SetDefaultBackGround
+            SetBackGroundColor(Config.BackGroundColor, HighLightRange[NowChoice]);
+        }
+
+        private List<TextRange> FindString(string text, string keyword)  //return i th word in the text near to the keyword
+        {
+            //定义匹配阈值
+            List<TextRange> HighLightRange = new List<TextRange>();
+            int threshold = 5;
+            if (keyword.Length <= 2) threshold = 3;
+            //            else if(keyword.Length<=4) threshold = keyword.Length-1;
+            //            else if (keyword.Length <= 6) threshold = keyword.Length - 2;
+            //            else threshold = keyword.Length - 2;
+
+            List<string> Temp_SpiltWords = new List<string>();
+            text = text.Replace('.', ' '); // get rid of the influence of biaodian
+            text = text.Replace(',', ' ');
+            text = text.Replace('!', ' ');
+            int i = 0;
+            foreach (string a in text.Split(' '))
+            {
+
+                if (a == "") continue;
+                if (a.Length == 0) continue;
+                
+                int distance = getEditDistance(a, keyword);
+                if (distance <= threshold)
+                {
+                    if (distance == 0) continue;
+                    HighLightRange.Add(SplitWordsRange[i]);
+
+                }
+                i++;
+            }
+            return HighLightRange;
         }
         private void updateInterface()
         {
@@ -122,6 +190,7 @@ namespace HeadEdit
             }
             else if (EditFlag == true)
             {
+                //if(popupController.)
                 popupController.pop(currentCursor);
                 /*
                 if (InputBox.Visibility!=Visibility.Visible)
@@ -160,12 +229,12 @@ namespace HeadEdit
             return;
         }
 
-        private void SetFontColor(ConsoleColor color,TextRange range)
+        public void SetFontColor(ConsoleColor color,TextRange range)
         {
             range.ApplyPropertyValue(TextElement.ForegroundProperty, color);
         }
         
-        private void SetBackGroundColor(ConsoleColor color, TextRange range)
+        public void SetBackGroundColor(ConsoleColor color, TextRange range)
         {
             range.ApplyPropertyValue(TextElement.BackgroundProperty, color);
         }
@@ -227,6 +296,159 @@ namespace HeadEdit
             }
 
         }
+
+        public int getEditDistance(String s, String t)
+        {
+            s = s.ToLower(); // lower mode
+            t = t.ToLower();
+            ///编辑距离调整：1.长度差距很大，惩罚比较大。 2.字母之间的差距，和键盘相互结合
+            int[,] d; // matrix
+            int n = 0; // length of s
+            int m = 0; // length of t
+            int i; // iterates through s
+            int j; // iterates through t
+            char s_i; // ith character of s
+            char t_j; // jth character of t
+            int cost; // cost
+
+            // Step 1
+
+            n = s.Length;
+            m = t.Length;
+            if (n == 0)
+            {
+                return m;
+            }
+            if (m == 0)
+            {
+                return n;
+            }
+            d = new int[n + 1, m + 1];
+
+            for (i = 0; i <= n; i++)
+            {
+                d[i, 0] = 1;
+            }
+
+            for (j = 0; j <= m; j++)
+            {
+                d[0, j] = j;
+            }
+
+            // Step 3
+
+            for (i = 1; i <= n; i++)
+            {
+                s_i = s[i - 1];
+                // Step 4
+                for (j = 1; j <= m; j++)
+                {
+                    t_j = t[j - 1];
+                    // Step 5
+                    cost = chartocharx(s_i, t_j);
+                    if (i > 1 && j > 1)
+                    {
+                        if (t[j - 1] == s[i - 2] && t[j - 2] == s[i - 1]) cost = 0;
+                    }
+                    d[i, j] = Minimum(d[i - 1, j] + 3, d[i, j - 1] + 3,
+                            d[i - 1, j - 1] + cost);
+                }
+            }
+            int charzhi = System.Math.Abs(m - n);
+            if (charzhi == 2)
+            {
+                d[n, m] += 3;
+            }
+            else if (charzhi > 2)
+            {
+                d[n, m] += charzhi * 3;
+            }
+            // Step 7
+            return d[n, m];
+
+        }
+        private int chartocharx(char a, char b)
+        {
+            int x1 = Char.ToLower(a) - 'a';
+            int x2 = Char.ToLower(b) - 'a';
+            if (x1 < 0 || x1 > 25 || x2 < 0 || x2 > 25)
+            {
+                return 3;
+            }
+            else
+            {
+                return chartochar[x1, x2];
+            }
+        }
+
+        private static int Minimum(int a, int b, int c)
+        {
+            int mi;
+
+            mi = a;
+            if (b < mi)
+            {
+                mi = b;
+            }
+            if (c < mi)
+            {
+                mi = c;
+            }
+            return mi;
+        }
+        private static int[,] chartochar = new int[26, 26] {
+             { 0, 3, 3, 3,3,3,3,3,3,3,3,3,3,3,3,3,1,3,1,3,3,3,3,3,3,1 },//a
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 0, 3, 3,3,3,1,1,3,3,3,3,3,1,3,3,3,3,3,3,3,1,3,3,3,3 },//b
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 0, 1,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,3,1,3,3 },//c
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 1, 0,1,1,3,3,3,3,3,3,3,3,3,3,3,3,1,3,3,3,3,3,3,3 },//d
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 1,0,3,3,3,3,3,3,3,3,3,3,3,3,1,3,3,3,3,1,3,3,3 },//e
+            // a  b  c  d e 1 g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 1,3,0,1,3,3,3,3,3,3,3,3,3,3,1,3,3,3,1,3,3,3,3 },//f
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 1, 3, 3,3,1,0,1,3,3,3,3,3,3,3,3,3,3,3,1,3,3,3,3,3,3 },//g
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,1,0,3,1,3,3,3,1,3,3,3,3,3,3,3,3,3,3,1,3 },//h
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,3,0,3,1,3,3,3,1,3,3,3,3,3,1,3,3,3,3,3 },//i
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,1,1,0,1,3,1,1,3,3,3,3,3,3,1,3,3,3,3,3 },//j
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,3,1,1,0,1,1,3,3,3,3,3,3,3,3,3,3,3,3,3 },//k
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,3,3,3,1,0,3,3,1,3,3,3,3,3,3,3,3,3,3,3 },//l
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,3,3,1,1,3,0,1,3,3,3,3,3,3,3,3,3,3,3,3 },//m
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 1, 3, 3,3,3,3,1,3,1,3,3,1,0,3,3,3,3,3,3,3,3,3,3,3,3 },//n
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,3,1,3,1,1,3,3,0,1,3,3,3,3,3,3,3,3,3,3 },//o
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,3,3,3,3,3,3,3,1,0,3,3,3,3,3,3,3,3,3,3 },//p
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 1, 3, 3, 3,3,3,3,3,3,3,3,3,3,3,3,3,0,3,3,3,3,3,1,3,3,3 },//q
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,1,1,3,3,3,3,3,3,3,3,3,3,3,0,3,1,3,3,3,3,3,3 },//r
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 1, 3, 3, 1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,0,3,3,3,1,1,3,3 },//s
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,1,3,3,3,3,3,3,3,3,3,3,1,3,0,3,3,3,3,1,3 },//t
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,3,1,1,3,3,3,3,3,3,3,3,3,3,0,3,3,3,1,3 },//u
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 1, 1, 3,3,1,3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,0,3,3,3,3 },//v
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,1,3,3,3,3,3,3,3,3,3,3,3,1,3,1,3,3,3,0,3,3,3 },//w
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 1, 1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,3,3,3,3,0,3,1 },//x
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 3, 3, 3, 3,3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,1,1,3,3,3,0,3 },//y
+            // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
+             { 1, 3, 3, 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,3,3,3,3,1,3,0 },//z
+         };
     }
     
 }
