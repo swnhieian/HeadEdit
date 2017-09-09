@@ -29,11 +29,38 @@ namespace HeadEdit
             else if (e.Key == Config.enterSelect)
             {
                 //to do: replace text
-                exitPopup();
+                if (window.popupTextBox.Text!=null&&window.popupTextBox.Text != "")
+                {
+                    window.popupTextBox.Text = "";
+
+                    //remove all property of headselectrange
+                    window.SetFontColor(Config.DefaultFontColor, window.HeadSelectRange);
+                    window.SetBackGroundColor(Config.DefaultBackGroundColor, window.HighLightRange[window.NowChoice]);
+                }
+                
+                //exitPopup();
             }
             else if (e.Key == Config.selectNext)
             {
-                //to do: change highlight
+                if(window.HighLightRange==null||window.HighLightRange.Count <= 1)
+                {
+                    return;
+                }
+                else
+                {
+                    //remove background property of lastchoice
+                    window.SetBackGroundColor(Config.DefaultBackGroundColor, window.HighLightRange[window.NowChoice]);
+                    //remove preview
+                    window.HighLightRange[window.NowChoice].Text = window.NowChoiceString;
+                    //change now choice
+                    window.NowChoice = (window.NowChoice + 1) % window.HighLightRange.Count;
+
+                    window.NowChoiceString = window.HighLightRange[window.NowChoice].Text;
+                    //PreView of the input
+                    window.HighLightRange[window.NowChoice].Text = window.popupTextBox.Text;
+                    //SetBackGround
+                    window.SetBackGroundColor(Config.BackGroundColor, window.HighLightRange[window.NowChoice]);
+                }
 
             }
             else  // normal input
