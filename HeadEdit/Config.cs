@@ -17,7 +17,7 @@ namespace HeadEdit
         public static Key cancelKey = Key.Escape;
         public static Key enterSelect = Key.Enter;
         public static Key selectNext = Key.Tab;
-        public static ConsoleColor HeadSelectColor = ConsoleColor.DarkGreen;;
+        public static ConsoleColor HeadSelectColor = ConsoleColor.DarkGreen;
         public static ConsoleColor FontColor = ConsoleColor.DarkCyan;
         public static ConsoleColor BackGroundColor = ConsoleColor.Blue;
         public static ConsoleColor DefaultFontColor = ConsoleColor.Black;
