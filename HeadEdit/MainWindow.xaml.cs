@@ -31,10 +31,10 @@ namespace HeadEdit
         private bool moveFlag = false;
         private bool editFlag = false;
 
-        public TextRange HeadSelectRange;
+        public List<TextRange> HeadSelectRange;
         public List<TextRange> SplitWordsRange;
         public List<TextRange> HighLightRange;
-        public int NowChoice = 0;
+        public int NowChoice = 0;//nowchoice of highlightrange
         public string NowChoiceString;
 
 
@@ -109,12 +109,12 @@ namespace HeadEdit
         }
         public void matchString(String input)
         {
-            //Remove font property of last HighLightRange
+            //renew font property of last HighLightRange
             if (HighLightRange!=null && HighLightRange.Count > 0)
             {
                 for (int i = 0; i < HighLightRange.Count; i++)
                 {
-                    SetFontColor(Config.DefaultFontColor, HighLightRange[i]);
+                    SetFontColor(Config.HeadSelectColor, HighLightRange[i]);
                 }
             }
             //if no input,return
@@ -123,8 +123,12 @@ namespace HeadEdit
                 return;
             }
             if (input == "") return ;
-
-            string text = HeadSelectRange.Text;
+            string text ="";
+            for (int i=0;i< HeadSelectRange.Count; i++)
+            {
+                text=text+HeadSelectRange[i].Text+" ";
+            }
+            //string text = HeadSelectRange.Text;
             //find the match range
             HighLightRange = FindString(text, input);
             //highlight
@@ -141,7 +145,7 @@ namespace HeadEdit
             //SetDefaultBackGround
             SetBackGroundColor(Config.BackGroundColor, HighLightRange[NowChoice]);
         }
-
+        
         private List<TextRange> FindString(string text, string keyword)  //return i th word in the text near to the keyword
         {
             //定义匹配阈值
@@ -284,8 +288,14 @@ namespace HeadEdit
                 if (InputBox.Visibility == Visibility.Visible)
                 {
                     InputBox.Visibility = Visibility.Hidden;
-                    SetFontColor(Config.DefaultFontColor, HeadSelectRange);
-                    SetBackGroundColor(Config.DefaultBackGroundColor, HeadSelectRange);
+                    for(int i=0;i< HeadSelectRange.Count; i++)
+                    {
+                        SetFontColor(Config.DefaultFontColor, HeadSelectRange[i]);
+                    }
+                    if (HighLightRange != null)
+                    {
+                        SetBackGroundColor(Config.DefaultBackGroundColor, HighLightRange[NowChoice]);
+                    }                    
                 }
                 
 

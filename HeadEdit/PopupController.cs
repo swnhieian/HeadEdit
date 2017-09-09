@@ -34,8 +34,15 @@ namespace HeadEdit
                     window.popupTextBox.Text = "";
 
                     //remove all property of headselectrange
-                    window.SetFontColor(Config.DefaultFontColor, window.HeadSelectRange);
-                    window.SetBackGroundColor(Config.DefaultBackGroundColor, window.HighLightRange[window.NowChoice]);
+                    for (int i = 0; i < window.HeadSelectRange.Count; i++)
+                    {
+                        window.SetFontColor(Config.HeadSelectColor, window.HeadSelectRange[i]);
+                    }
+                    if (window.HighLightRange != null)
+                    {
+                        window.SetBackGroundColor(Config.DefaultBackGroundColor, window.HighLightRange[window.NowChoice]);
+                    }
+                    
                 }
                 
                 //exitPopup();
