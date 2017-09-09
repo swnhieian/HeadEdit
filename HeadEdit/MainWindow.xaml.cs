@@ -113,10 +113,14 @@ namespace HeadEdit
             //renew font property of last HighLightRange
             if (HighLightRange!=null && HighLightRange.Count > 0)
             {
+                HighLightRange[NowChoice].Text = NowChoiceString;
+
                 for (int i = 0; i < HighLightRange.Count; i++)
                 {
                     SetFontColor(Config.HeadSelectColor, HighLightRange[i]);
                 }
+                
+
             }
             //if no input,return
             if (SplitWordsRange == null || input == null)

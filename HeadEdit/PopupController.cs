@@ -59,6 +59,8 @@ namespace HeadEdit
                     window.SetBackGroundColor(Config.DefaultBackGroundColor, window.HighLightRange[window.NowChoice]);
                     //remove preview
                     window.HighLightRange[window.NowChoice].Text = window.NowChoiceString;
+                    //
+                    window.SetFontColor(Config.HeadSelectColor, window.HighLightRange[window.NowChoice]);
                     //change now choice
                     window.NowChoice = (window.NowChoice + 1) % window.HighLightRange.Count;
 
@@ -72,7 +74,13 @@ namespace HeadEdit
             }
             else  // normal input
             {
-                Console.WriteLine(window.popupTextBox.Text);
+                //Console.WriteLine(window.popupTextBox.Text);
+                //remove background property of lastchoice
+                if(window.HighLightRange != null&& window.HighLightRange.Count > 0)
+                {
+                    window.SetBackGroundColor(Config.DefaultBackGroundColor, window.HighLightRange[window.NowChoice]);
+                }
+                //window.HighLightRange = null;
                 window.matchString(window.popupTextBox.Text);
                 
             }
