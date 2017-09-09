@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -31,7 +32,7 @@ namespace HeadEdit
         private bool moveFlag = false;
         private bool editFlag = false;
 
-        public List<TextRange> HeadSelectRange;
+        //public List<TextRange> HeadSelectRange;
         public List<TextRange> SplitWordsRange;
         public List<TextRange> HighLightRange;
         public int NowChoice = 0;//nowchoice of highlightrange
@@ -118,35 +119,35 @@ namespace HeadEdit
                 }
             }
             //if no input,return
-            if (HeadSelectRange == null || input == null)
+            if (SplitWordsRange == null || input == null)
             {
                 return;
             }
             if (input == "") return ;
-            string text ="";
-            for (int i=0;i< HeadSelectRange.Count; i++)
-            {
-                text=text+HeadSelectRange[i].Text+" ";
-            }
             //string text = HeadSelectRange.Text;
             //find the match range
-            HighLightRange = FindString(text, input);
+            HighLightRange = FindString(input);
             //highlight
             for(int i = 0; i < HighLightRange.Count; i++)
             {
                 SetFontColor(Config.FontColor, HighLightRange[i]);
             }
-            //default choice:0
-            NowChoice = 0;
-            //remember raw text
-            NowChoiceString = HighLightRange[NowChoice].Text;
-            //PreView of the input
-            HighLightRange[NowChoice].Text = input;
-            //SetDefaultBackGround
-            SetBackGroundColor(Config.BackGroundColor, HighLightRange[NowChoice]);
+
+            if (HighLightRange.Count != 0)
+            {
+                //default choice:0
+                NowChoice = 0;
+                //remember raw text
+                NowChoiceString = HighLightRange[NowChoice].Text;
+                //PreView of the input
+                HighLightRange[NowChoice].Text = input;
+                //SetDefaultBackGround
+                SetBackGroundColor(Config.BackGroundColor, HighLightRange[NowChoice]);
+            }
+            
         }
         
-        private List<TextRange> FindString(string text, string keyword)  //return i th word in the text near to the keyword
+        private List<TextRange> FindString(string keyword)  //return i th word in the text near to the keyword
         {
             //定义匹配阈值
             List<TextRange> HighLightRange = new List<TextRange>();
@@ -155,15 +156,10 @@ namespace HeadEdit
             //            else if(keyword.Length<=4) threshold = keyword.Length-1;
             //            else if (keyword.Length <= 6) threshold = keyword.Length - 2;
             //            else threshold = keyword.Length - 2;
-
-            List<string> Temp_SpiltWords = new List<string>();
-            text = text.Replace('.', ' '); // get rid of the influence of biaodian
-            text = text.Replace(',', ' ');
-            text = text.Replace('!', ' ');
             int i = 0;
-            foreach (string a in text.Split(' '))
+            foreach (TextRange b in SplitWordsRange)
             {
-
+                var a = b.Text;
                 if (a == "") continue;
                 if (a.Length == 0) continue;
                 
@@ -182,6 +178,22 @@ namespace HeadEdit
         {
             if (moveFlag == false && EditFlag == false)
             {
+                //renew  last color
+                if (SplitWordsRange != null && SplitWordsRange.Count > 0)
+                {
+                    foreach(TextRange a in SplitWordsRange)
+                    {
+                        SetFontColor(Config.DefaultFontColor, a);
+                    }
+                }
+
+                SplitWordsRange = get_range(currentCursor,70,70);
+
+                //setcolor
+                foreach (TextRange a in SplitWordsRange)
+                {
+                    SetFontColor(Config.HeadSelectColor, a);
+                }                
                 Canvas.SetLeft(HeadEllipse, currentCursor.X - HeadEllipse.Width / 2);
                 Canvas.SetTop(HeadEllipse, currentCursor.Y - HeadEllipse.Height / 2);
             }
@@ -233,12 +245,13 @@ namespace HeadEdit
             return;
         }
 
-        public void SetFontColor(ConsoleColor color,TextRange range)
+        public void SetFontColor(Brush color,TextRange range)
         {
+
             range.ApplyPropertyValue(TextElement.ForegroundProperty, color);
         }
         
-        public void SetBackGroundColor(ConsoleColor color, TextRange range)
+        public void SetBackGroundColor(Brush color, TextRange range)
         {
             range.ApplyPropertyValue(TextElement.BackgroundProperty, color);
         }
@@ -256,6 +269,58 @@ namespace HeadEdit
                 //Canvas.SetLeft(headEllipse, mousePos.X - headEllipse.Width/2);
                 //Canvas.SetTop(headEllipse, mousePos.Y - headEllipse.Height/2);
             }
+        }
+
+        public static IEnumerable<TextRange> GetAllWordRanges(FlowDocument document)
+        {
+            string pattern = @"[^\W\d](\w|[-']{1,2}(?=\w))*";
+            TextPointer pointer = document.ContentStart;
+            while (pointer != null)
+            {
+                if (pointer.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
+                {
+                    string textRun = pointer.GetTextInRun(LogicalDirection.Forward);
+                    MatchCollection matches = Regex.Matches(textRun, pattern);
+                    foreach (Match match in matches)
+                    {
+                        int startIndex = match.Index;
+                        int length = match.Length;
+                        TextPointer start = pointer.GetPositionAtOffset(startIndex);
+                        TextPointer end = start.GetPositionAtOffset(length);
+                        yield return new TextRange(start, end);
+                    }
+                }
+
+                pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
+            }
+        }
+        public void SetBackGround(Color l, TextRange textRange)
+        {
+            textRange.ApplyPropertyValue(TextElement.BackgroundProperty, new SolidColorBrush(l));
+            //            textRange.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(CommonColorsHelp.SelectedKeyFontColor));
+        }
+        private bool in_circle(TextRange t, Point p, int w, int h)
+        {
+
+            Rect start = t.Start.GetCharacterRect(LogicalDirection.Forward);
+            Rect end = t.End.GetCharacterRect(LogicalDirection.Backward);
+            if (start.X > (p.X + w) || end.X < (p.X - w)) return false;
+            if (start.Y > (p.Y + h) || start.Y < (p.Y - h)) return false;
+            return true;
+        }
+        private List<TextRange> get_range(Point p, int w, int h) // 上下k行
+        {
+            List<TextRange> select = new List<TextRange>();
+            var poz = richTextBox.GetPositionFromPoint(p, true);
+            List<TextRange> allTextRanges = GetAllWordRanges(richTextBox.Document).ToList();
+            foreach (var item in allTextRanges)
+            {
+                if (in_circle(item, p, w, h) == true)
+                {
+                    select.Add(item);
+                }
+            }
+            return select;
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
@@ -288,9 +353,9 @@ namespace HeadEdit
                 if (InputBox.Visibility == Visibility.Visible)
                 {
                     InputBox.Visibility = Visibility.Hidden;
-                    for(int i=0;i< HeadSelectRange.Count; i++)
+                    for(int i=0;i< SplitWordsRange.Count; i++)
                     {
-                        SetFontColor(Config.DefaultFontColor, HeadSelectRange[i]);
+                        SetFontColor(Config.DefaultFontColor, SplitWordsRange[i]);
                     }
                     if (HighLightRange != null)
                     {

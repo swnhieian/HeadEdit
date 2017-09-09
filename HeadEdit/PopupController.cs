@@ -16,7 +16,7 @@ namespace HeadEdit
             this.window = window;
             //set styles of popup window
             window.popup.IsOpen = false;
-            window.popupTextBox.KeyDown += PopupTextBox_KeyDown;
+            window.popupTextBox.KeyUp += PopupTextBox_KeyDown;
             window.popupTextBox.FontSize = Config.richTextBoxFontSize;
         }
 
@@ -34,9 +34,9 @@ namespace HeadEdit
                     window.popupTextBox.Text = "";
 
                     //remove all property of headselectrange
-                    for (int i = 0; i < window.HeadSelectRange.Count; i++)
+                    for (int i = 0; i < window.SplitWordsRange.Count; i++)
                     {
-                        window.SetFontColor(Config.HeadSelectColor, window.HeadSelectRange[i]);
+                        window.SetFontColor(Config.HeadSelectColor, window.SplitWordsRange[i]);
                     }
                     if (window.HighLightRange != null)
                     {
@@ -72,7 +72,9 @@ namespace HeadEdit
             }
             else  // normal input
             {
+                Console.WriteLine(window.popupTextBox.Text);
                 window.matchString(window.popupTextBox.Text);
+                
             }
         }
         private void exitPopup()
