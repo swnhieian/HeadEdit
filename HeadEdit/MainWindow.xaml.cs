@@ -271,12 +271,18 @@ namespace HeadEdit
             }
         }
 
-        public static IEnumerable<TextRange> GetAllWordRanges(FlowDocument document)
+        public static IEnumerable<TextRange> GetAllWordRanges(TextPointer p, TextPointer pp)
         {
             string pattern = @"[^\W\d](\w|[-']{1,2}(?=\w))*";
-            TextPointer pointer = document.ContentStart;
+            TextPointer pointer = p;
+
+            //
             while (pointer != null)
             {
+                if (pp != null &&pointer.CompareTo(pp) > -1)
+                {
+                    break;
+                }
                 if (pointer.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
                 {
                     string textRun = pointer.GetTextInRun(LogicalDirection.Forward);
@@ -312,7 +318,9 @@ namespace HeadEdit
         {
             List<TextRange> select = new List<TextRange>();
             var poz = richTextBox.GetPositionFromPoint(p, true);
-            List<TextRange> allTextRanges = GetAllWordRanges(richTextBox.Document).ToList();
+            TextPointer begin = poz.GetLineStartPosition(-2);
+            TextPointer end = poz.GetLineStartPosition(2);
+            List<TextRange> allTextRanges = GetAllWordRanges(begin, end).ToList();
             foreach (var item in allTextRanges)
             {
                 if (in_circle(item, p, w, h) == true)
