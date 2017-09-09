@@ -23,7 +23,7 @@ namespace HeadEdit
         public static Brush BackGroundColor = Brushes.Blue;
         public static Brush DefaultFontColor = Brushes.Black;
         public static Brush DefaultBackGroundColor = Brushes.White;
-        public static double stableThreshold = 0.02;
+        public static double stableThreshold = 0.03;
         public static double richTextBoxFontSize = 30;
     }
 }

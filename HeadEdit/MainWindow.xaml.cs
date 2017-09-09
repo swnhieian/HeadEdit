@@ -191,9 +191,10 @@ namespace HeadEdit
                     }
                 }
 
-                SplitWordsRange = get_range(currentCursor,70,70);
+                SplitWordsRange = get_range(currentCursor,20,20);
 
                 //setcolor
+                
                 foreach (TextRange a in SplitWordsRange)
                 {
                     SetFontColor(Config.HeadSelectColor, a);
@@ -277,12 +278,15 @@ namespace HeadEdit
 
         public static IEnumerable<TextRange> GetAllWordRanges(TextPointer p, TextPointer pp)
         {
-            string pattern = @"[^\W\d](\w|[-']{1,2}(?=\w))*";
+            //string pattern = @"[^\W\d](\w|[-']{1,2}(?=\w))*";
+            string pattern = @"[^\s]*";
             TextPointer pointer = p;
-
+            DateTime satrtTime  = System.DateTime.Now;
             //
+            int no = 0;
             while (pointer != null)
             {
+                no ++;
                 if (pp != null &&pointer.CompareTo(pp) > -1)
                 {
                     break;
@@ -290,7 +294,18 @@ namespace HeadEdit
                 if (pointer.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
                 {
                     string textRun = pointer.GetTextInRun(LogicalDirection.Forward);
-                    MatchCollection matches = Regex.Matches(textRun, pattern);
+                    // Console.WriteLine("{0},{1}", no, textRun);
+                    string[] words = textRun.Split(' ');
+                    int startIndex = 0;
+                    foreach (var word in words)
+                    {
+                        if (word.Length > 0)
+                        {
+                            yield return new TextRange(pointer.GetPositionAtOffset(startIndex), pointer.GetPositionAtOffset(startIndex + word.Length));
+                        }
+                        startIndex += (word.Length + 1);
+                    }
+                    /*MatchCollection matches = Regex.Matches(textRun, pattern);
                     foreach (Match match in matches)
                     {
                         int startIndex = match.Index;
@@ -298,11 +313,13 @@ namespace HeadEdit
                         TextPointer start = pointer.GetPositionAtOffset(startIndex);
                         TextPointer end = start.GetPositionAtOffset(length);
                         yield return new TextRange(start, end);
-                    }
+                    }*/
                 }
 
                 pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
             }
+            //Console.WriteLine(System.DateTime.Now.Subtract(satrtTime).TotalMilliseconds);
+            //Console.WriteLine("===");
         }
         public void SetBackGround(Color l, TextRange textRange)
         {
@@ -322,7 +339,9 @@ namespace HeadEdit
         {
             List<TextRange> select = new List<TextRange>();
             var poz = richTextBox.GetPositionFromPoint(p, true);
+            if (poz == null) return select;
             TextPointer begin = poz.GetLineStartPosition(-2);
+            if (begin == null) begin = poz.DocumentStart;
             TextPointer end = poz.GetLineStartPosition(2);
             List<TextRange> allTextRanges = GetAllWordRanges(begin, end).ToList();
             foreach (var item in allTextRanges)
