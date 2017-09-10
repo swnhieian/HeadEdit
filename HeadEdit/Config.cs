@@ -10,11 +10,11 @@ namespace HeadEdit
 {
     class Config
     {
-        public static bool debug = true;
-        public static bool useCamera = true;   // false means use mouse move
+        public static bool debug = false;
+        public static bool useCamera = false;   // false means use mouse move
         public static Key calibrationKey = Key.F12;
         public static Key moveKey = Key.F1;
-        public static Key editKey = Key.F2;
+        public static Key editKey = Key.LeftShift;
         public static Key cancelKey = Key.Escape;
         public static Key enterSelect = Key.Enter;
         public static Key selectNext = Key.Tab;
@@ -25,5 +25,7 @@ namespace HeadEdit
         public static Brush DefaultBackGroundColor = Brushes.White;
         public static double stableThreshold = 0.05;
         public static double richTextBoxFontSize = 30;
+        public static double fontWidth = 1807.93774319066 / 99.0;
+        public static FontFamily fontFamily = new FontFamily("Courier New");
     }
 }

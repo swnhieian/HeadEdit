@@ -40,6 +40,7 @@ namespace HeadEdit
         public string NowChoiceString;
         List<Rectangle> rects = new List<Rectangle>();
 
+
         public bool EditFlag
         {
             get
@@ -68,6 +69,7 @@ namespace HeadEdit
 
         public MainWindow()
         {
+            Console.WriteLine(getEditDistance("language", "languages"));
             InitializeComponent();
             this.WindowState = WindowState.Maximized;
             
@@ -89,8 +91,8 @@ namespace HeadEdit
             calibration = new Calibration();
             HeadEllipse = new Ellipse()
             {
-                Width = 200,
-                Height = 200,
+                Width = 400,
+                Height = 150,
                 Stroke = new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)),
                 StrokeThickness=2
             };
@@ -110,10 +112,30 @@ namespace HeadEdit
             {
                 rects.Add(new Rectangle());
                 mainCanvas.Children.Add(rects[i]);
+                rects[i].Height = 35;
+                rects[i].Fill = Brushes.Yellow;
+                rects[i].Opacity = 0.3;
             }
-
+            richTextBox.FontFamily = Config.fontFamily;
+            
+            //System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
+            //dispatcherTimer.Tick += dispatcherTimer_Tick;
+            //dispatcherTimer.Interval = new TimeSpan(0, 0, 5);
+            //dispatcherTimer.Start();
 
         }
+        /*private void dispatcherTimer_Tick(object sender, EventArgs e)
+        {
+            if(moveFlag == false && EditFlag == false)
+            {
+                TextRange range = new TextRange(richTextBox.Document.ContentStart, richTextBox.Document.ContentEnd);
+                string a = range.Text;
+                //Run run = new Run(range.Text);
+                range.Text = a;
+            }
+            // code goes here
+        }
+        */
         private void handleHeadPosition(Object para)
         {
             Point headPos = calibration.parsePoint((Point)para);
@@ -167,7 +189,7 @@ namespace HeadEdit
         {
             //定义匹配阈值
             List<TextRange> HighLightRange = new List<TextRange>();
-            int threshold = 5;
+            double threshold = 5;
             if (keyword.Length <= 2) threshold = 3;
             //            else if(keyword.Length<=4) threshold = keyword.Length-1;
             //            else if (keyword.Length <= 6) threshold = keyword.Length - 2;
@@ -179,10 +201,10 @@ namespace HeadEdit
                 if (a == "") continue;
                 if (a.Length == 0) continue;
                 
-                int distance = getEditDistance(a, keyword);
+                double distance = getEditDistance(a, keyword);
                 if (distance <= threshold)
                 {
-                    if (distance == 0) continue;
+                    if (Math.Abs(distance) < Double.Epsilon) continue;
                     HighLightRange.Add(SplitWordsRange[i]);
 
                 }
@@ -192,6 +214,7 @@ namespace HeadEdit
         }
         private void updateInterface()
         {
+            //Console.WriteLine(richTextBox.ActualWidth);
             if (moveFlag == false && EditFlag == false)
             {
                 //renew  last color
@@ -205,18 +228,17 @@ namespace HeadEdit
                          //   a.ApplyPropertyValue(TextElement.FontWeightProperty, FontWeights.Normal);
                         }
                     }
-                    var wordRangePos = get_range(currentCursor, 100, 100);
+                    //DateTime t1 = DateTime.Now;
+                    var wordRangePos = get_range(currentCursor, headEllipse.Width / 2, headEllipse.Height / 2);
+                    //Console.WriteLine(DateTime.Now.Subtract(t1).TotalMilliseconds);
                     SplitWordsRange = wordRangePos.Item1;
 
                     for (int i=0; i < wordRangePos.Item2.Count; i++)
                     {
                         Canvas.SetLeft(rects[i], wordRangePos.Item2[i][1]);
                         Canvas.SetTop(rects[i], wordRangePos.Item2[i][0]);
-                        rects[i].Width = wordRangePos.Item2[i][2] - wordRangePos.Item2[i][1];
-                        rects[i].Height = 40;
-                        rects[i].Fill = Brushes.BurlyWood;
                         rects[i].Visibility = Visibility.Visible;
-                        rects[i].Opacity = 0.3;
+                        rects[i].Width = wordRangePos.Item2[i][2] - wordRangePos.Item2[i][1];
                     }
                     for (int i = wordRangePos.Item2.Count; i<rects.Count; i++)
                     {
@@ -255,21 +277,7 @@ namespace HeadEdit
             }
             else if (EditFlag == true)
             {
-                //if(popupController.)
                 popupController.pop(currentCursor);
-                /*
-                if (InputBox.Visibility!=Visibility.Visible)
-                {
-                    HeadSelectRange = HeadSelectRangeWay(headToCanvasPos);  // to do
-                    //change the color of selectrange
-                    SetFontColor(Config.FontColor,HeadSelectRange);
-                    //match inputbox's positioh with headPos
-                    SetBoxPos(headToCanvasPos);                               //to do
-                    //Focus on the InputBox
-                    InputBox.Focus();
-                }*/
-                //
-                //TextRange SelectWordsRange= SearchKeyWord(HeadSelectRange, InputBox.Text);
             }
         }
         
@@ -323,7 +331,7 @@ namespace HeadEdit
         public static IEnumerable<TextRange> GetAllWordRanges(TextPointer p, TextPointer pp)
         {
             //string pattern = @"[^\W\d](\w|[-']{1,2}(?=\w))*";
-            string pattern = @"[^\s]*";
+            string pattern = @"[^\s]+";
             TextPointer pointer = p;
             //
             //List<TextRange> res = new List<TextRange>();
@@ -331,7 +339,7 @@ namespace HeadEdit
             while (pointer != null)
             {
                 no ++;
-                if (pp != null &&pointer.CompareTo(pp) > -1)
+                if (pp != null && pointer.CompareTo(pp) > -1)
                 {
                     break;
                 }
@@ -348,8 +356,8 @@ namespace HeadEdit
                             yield return new TextRange(pointer.GetPositionAtOffset(startIndex), pointer.GetPositionAtOffset(startIndex + word.Length));
                         }
                         startIndex += (word.Length + 1);
-                    }
-                    /*MatchCollection matches = Regex.Matches(textRun, pattern);
+                    }/*
+                    MatchCollection matches = Regex.Matches(textRun, pattern);
                     foreach (Match match in matches)
                     {
                         int startIndex = match.Index;
@@ -376,41 +384,88 @@ namespace HeadEdit
             if (start.Y > (p.Y + h) || start.Y < (p.Y - h)) return false;
             return true;
         }
-        private Tuple<List<TextRange>, List<double[]> > get_range(Point p, int w, int h) // 上下k行
+        private Tuple<List<TextRange>, List<double[]> > get_range(Point p, double w, double h) // 上下k行
         {
             List<TextRange> select = new List<TextRange>();
             
-            var poz = richTextBox.GetPositionFromPoint(p, true);
-            if (poz == null) return new Tuple<List<TextRange>, List<double[]> >(select, new List<double[]>());
-            TextPointer begin = poz.GetLineStartPosition(-2);
-            if (begin == null) begin = poz.DocumentStart;
-            TextPointer end = poz.GetLineStartPosition(2);
-            List<TextRange> allTextRanges = GetAllWordRanges(begin, end).ToList();
-
-
-            //Console.WriteLine(allTextRanges.Count);
-            List<double[]> arrayPos = new List<double[]>();
-            //
-            foreach (var textRange in allTextRanges)
+            var pos = richTextBox.GetPositionFromPoint(p, true);
+            if (pos == null) return new Tuple<List<TextRange>, List<double[]> >(select, new List<double[]>());
+            TextPointer begin = pos.GetLineStartPosition(-1);
+            //TextPointer lastEnd = poz.DocumentEnd.GetLineStartPosition(-3);
+            if (begin == null) begin = pos.DocumentStart;
+            /*if (begin != null && lastEnd != null && begin.CompareTo(lastEnd) > 0)
             {
-                Rect head = textRange.Start.GetCharacterRect(LogicalDirection.Forward);
-                Rect tail = textRange.End.GetCharacterRect(LogicalDirection.Backward);
-                if (!(head.X > (p.X + w) || tail.X < (p.X - w)) && !(head.Y > (p.Y + h) || head.Y < (p.Y - h)))
+                begin = lastEnd;
+            }*/
+            TextPointer end = pos.GetLineStartPosition(1);
+            Rect beginR = begin.GetCharacterRect(LogicalDirection.Forward);
+            List<double[]> arrayPos = new List<double[]>();
+            TextPointer lineBegin = begin;
+            while (begin != null)
+            {
+                if (end != null && begin.CompareTo(end) > -1) { break; }
+                if (begin.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
                 {
-                    if ((arrayPos.Count == 0) || Math.Abs(arrayPos.Last()[0] - head.Y) > Double.Epsilon)
+                    string text = begin.GetTextInRun(LogicalDirection.Forward);
+                    string[] words = text.Split(' ');
+                    int startIndex = 0;
+                    
+                    foreach (var word in words)
                     {
-                        arrayPos.Add(new double[3]);
-                        arrayPos.Last()[0] = head.Y;
-                        arrayPos.Last()[1] = head.X;
-                        arrayPos.Last()[2] = tail.X;
-                    } else
-                    {
-                        arrayPos.Last()[1] = Math.Min(arrayPos.Last()[1], head.X);
-                        arrayPos.Last()[2] = Math.Max(arrayPos.Last()[2], tail.X);
+                        if (word.Length > 0)
+                        {
+                            TextPointer headP = lineBegin.GetPositionAtOffset(startIndex);
+                            TextPointer tailP = lineBegin.GetPositionAtOffset(startIndex + word.Length);
+                            if (headP.GetLineStartPosition(0).CompareTo(begin) != 0)
+                            {
+                                beginR = headP.GetCharacterRect(LogicalDirection.Forward);
+                                lineBegin = headP;
+                                startIndex = 0;
+                            }
+
+                            //Rect head = headP.GetCharacterRect(LogicalDirection.Forward);
+                            //Rect tail = tailP.GetCharacterRect(LogicalDirection.Backward);
+                            Rect head = new Rect();
+                            Rect tail = new Rect();
+                            head.X = beginR.X + startIndex * Config.fontWidth;
+                            head.Y = beginR.Y;
+                            head.Height = beginR.Height;
+                            tail.X = beginR.X + (startIndex + word.Length) * Config.fontWidth;
+                            tail.Y = beginR.Y;
+                            tail.Height = beginR.Height;
+                            if (!(head.X > (p.X + w) || tail.X < (p.X - w)) && !(head.Y > (p.Y + h + head.Height + 5) || head.Y - head.Height < (p.Y - h - head.Height - 5)))
+                            {
+                                if ((arrayPos.Count == 0) || Math.Abs(arrayPos.Last()[0] - head.Y) > Double.Epsilon)
+                                {
+                                    arrayPos.Add(new double[3]);
+                                    arrayPos.Last()[0] = head.Y;
+                                    arrayPos.Last()[1] = head.X;
+                                    arrayPos.Last()[2] = tail.X;
+                                }
+                                else
+                                {
+                                    arrayPos.Last()[1] = Math.Min(arrayPos.Last()[1], head.X);
+                                    arrayPos.Last()[2] = Math.Max(arrayPos.Last()[2], tail.X);
+                                }
+                                select.Add(new TextRange(headP, tailP));
+                                //Console.WriteLine("in:" + textRange.Text);
+                            }
+                        }
+                        startIndex += (word.Length + 1);
                     }
-                    select.Add(textRange);
                 }
+                begin = begin.GetNextContextPosition(LogicalDirection.Forward);
             }
+
+
+
+            /*if (end != null)
+            {
+                end = poz.DocumentEnd;
+            }*/
+            //List<TextRange> allTextRanges = GetAllWordRanges(begin, end).ToList();
+
+
             return new Tuple<List<TextRange>, List<double[]> >(select, arrayPos);
         }
 
@@ -443,6 +498,7 @@ namespace HeadEdit
                 //remove any property of selectrange
                 if (popup.IsOpen)
                 {
+                    popupController.exitPopup();
                     popup.IsOpen = false;
                     //InputBox.Visibility = Visibility.Hidden;
                     for (int i=0;i< SplitWordsRange.Count; i++)
@@ -459,6 +515,13 @@ namespace HeadEdit
                 
 
                 e.Handled = true;
+                TextRange range = new TextRange(richTextBox.Document.ContentStart, richTextBox.Document.ContentEnd);
+                string a = range.Text;
+                //Run run = new Run(range.Text);
+                range.Text = a;
+                richTextBox.CaretPosition = richTextBox.Document.ContentEnd;
+
+
             }
             {
                 //do nothing
@@ -466,12 +529,51 @@ namespace HeadEdit
 
         }
 
-        public int getEditDistance(String s, String t)
+        public double getEditDistance(String s, String t)
         {
             s = s.ToLower(); // lower mode
             t = t.ToLower();
+            int m = s.Length;
+            int n = t.Length;
+            double[,] d = new double[s.Length + 1, t.Length + 1];
+            for (int i=0; i<m+1; i++)
+            {
+                for (int j=0; j<n+1; j++)
+                {
+                    d[i, j] = Double.MaxValue;
+                }
+            }
+            d[0, 0] = 0;
+            for (int i=0; i<m+1; i++)
+            {
+                d[i, 0] = i;
+            }
+            for (int j = 0; j < n + 1; j++)
+            {
+                d[0, j] = j;
+            }
+            for (int i=1; i<m+1;i++)
+            {
+                for (int j = 1; j < n + 1; j++)
+                {
+                    if (i - 1 >= 0 && d[i-1,j] < Double.MaxValue) {
+                        d[i, j] = Math.Min(d[i - 1, j] + 1, d[i, j]);
+                    }
+                    if (j-1>=0 && d[i, j-1] < Double.MaxValue)
+                    {
+                        d[i, j] = Math.Min(d[i, j - 1] + 1, d[i, j]);
+                    }
+                    if (i-1>=0 && j-1>=0 && d[i-1,j-1] < Double.MaxValue)
+                    {
+                        d[i, j] = Math.Min(d[i - 1, j - 1] + chartocharx(s[i-1], t[j-1]), d[i, j]);
+                    }
+                }
+            }
+            return d[m , n];
+
+
             ///编辑距离调整：1.长度差距很大，惩罚比较大。 2.字母之间的差距，和键盘相互结合
-            int[,] d; // matrix
+         /*   int[,] d; // matrix
             int n = 0; // length of s
             int m = 0; // length of t
             int i; // iterates through s
@@ -519,11 +621,11 @@ namespace HeadEdit
                     {
                         if (t[j - 1] == s[i - 2] && t[j - 2] == s[i - 1]) cost = 0;
                     }
-                    d[i, j] = Minimum(d[i - 1, j] + 3, d[i, j - 1] + 3,
+                    d[i, j] = Minimum(d[i - 1, j] + 2, d[i, j - 1] + 2,
                             d[i - 1, j - 1] + cost);
                 }
             }
-            int charzhi = System.Math.Abs(m - n);
+            /*int charzhi = System.Math.Abs(m - n);
             if (charzhi == 2)
             {
                 d[n, m] += 3;
@@ -533,7 +635,7 @@ namespace HeadEdit
                 d[n, m] += charzhi * 3;
             }
             // Step 7
-            return d[n, m];
+            return d[n, m];*/
 
         }
         private int chartocharx(char a, char b)

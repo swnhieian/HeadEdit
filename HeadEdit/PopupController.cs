@@ -18,6 +18,7 @@ namespace HeadEdit
             window.popup.IsOpen = false;
             window.popupTextBox.KeyUp += PopupTextBox_KeyUp;
             window.popupTextBox.FontSize = Config.richTextBoxFontSize;
+            window.popupTextBox.FontFamily = Config.fontFamily;
         }
 
         private void PopupTextBox_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
@@ -35,8 +36,8 @@ namespace HeadEdit
                 }
                 if (window.popupTextBox.Text!=null&&window.popupTextBox.Text != "")
                 {
+                    window.NowChoiceString = window.popupTextBox.Text;
                     window.popupTextBox.Text = "";
-
                     //remove all property of headselectrange
                     for (int i = 0; i < window.HighLightRange.Count; i++)
                     {
@@ -94,7 +95,7 @@ namespace HeadEdit
                 
             }
         }
-        private void exitPopup()
+        public void exitPopup()
         {
             //window.popup.IsOpen = false;
             window.richTextBox.Focusable = true;
@@ -106,8 +107,9 @@ namespace HeadEdit
         public void pop(Point position)
         {
             window.popup.PlacementTarget = window.HeadEllipse;
-            window.popup.Placement = PlacementMode.Right;
-            window.popup.VerticalOffset = 100;
+            window.popup.Placement = PlacementMode.Bottom;
+            window.popup.VerticalOffset = window.HeadEllipse.Height / 10;
+            window.popup.HorizontalOffset = window.HeadEllipse.Width * 1.1;
             window.popup.IsOpen = true;
             window.richTextBox.Focusable = false;
             window.popupTextBox.Focus();
