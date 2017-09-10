@@ -7,6 +7,7 @@ using System.Windows;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace HeadEdit
 {
@@ -39,6 +40,12 @@ namespace HeadEdit
         }
         public void start(MainWindow window, ThreadDelegate method)
         {
+            /*Random rand = new Random();
+            while (true)
+            {
+                window.Dispatcher.BeginInvoke(method, new Point(rand.NextDouble(), rand.NextDouble())); // direct + indirect   
+                Thread.Sleep(60);
+            }*/
             while (true)
             {
                 int receiveLength = clientSocket.Receive(result);

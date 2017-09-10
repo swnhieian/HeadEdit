@@ -77,6 +77,10 @@ namespace HeadEdit
             {
                 double x = (pos.X - calibratePoints[0].X) / (calibratePoints[1].X - calibratePoints[0].X);
                 double y = (pos.Y - calibratePoints[2].Y) / (calibratePoints[3].Y - calibratePoints[2].Y);
+                x = Math.Max(x, 0);
+                x = Math.Min(x, 1);
+                y = Math.Max(y, 0);
+                y = Math.Min(y, 1);
                 if ( (!Config.useCamera ||Double.IsNaN(lastX) || Double.IsNaN(lastY)) // no need to do stable
                      || !isStable(x, y, lastX, lastY) )
                 {

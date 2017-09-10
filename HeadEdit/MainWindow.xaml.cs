@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -37,7 +38,7 @@ namespace HeadEdit
         public List<TextRange> HighLightRange;
         public int NowChoice = 0;//nowchoice of highlightrange
         public string NowChoiceString;
-
+        List<Rectangle> rects = new List<Rectangle>();
 
         public bool EditFlag
         {
@@ -68,6 +69,7 @@ namespace HeadEdit
         public MainWindow()
         {
             InitializeComponent();
+            this.WindowState = WindowState.Maximized;
             
             //start a background thread which can receive head position from server
             Thread headPositionThread = new Thread(() =>
@@ -101,6 +103,16 @@ namespace HeadEdit
             }
             richTextBox.Focus();
             richTextBox.CaretPosition = richTextBox.Document.ContentEnd;
+            /*richTextBox.Selection.
+            richTextBox.Selection.Start = richTextBox.Document.ContentStart;
+            richTextBox.SelectionLength = richTextBox.Document.ContentStart.GetPositionAtOffset(10);*/
+            for (int i=0; i<10; i++)
+            {
+                rects.Add(new Rectangle());
+                mainCanvas.Children.Add(rects[i]);
+            }
+
+
         }
         private void handleHeadPosition(Object para)
         {
@@ -115,10 +127,10 @@ namespace HeadEdit
             {
                 HighLightRange[NowChoice].Text = NowChoiceString;
 
-                for (int i = 0; i < HighLightRange.Count; i++)
-                {
-                    SetFontColor(Config.HeadSelectColor, HighLightRange[i]);
-                }
+                //for (int i = 0; i < HighLightRange.Count; i++)
+                //{
+                //    SetFontColor(Config.HeadSelectColor, HighLightRange[i]);
+                //}
                 
 
             }
@@ -183,22 +195,54 @@ namespace HeadEdit
             if (moveFlag == false && EditFlag == false)
             {
                 //renew  last color
-                if (SplitWordsRange != null && SplitWordsRange.Count > 0)
+                this.Dispatcher.BeginInvoke(new Action(()=>
                 {
-                    foreach(TextRange a in SplitWordsRange)
+                    if (SplitWordsRange != null && SplitWordsRange.Count > 0)
                     {
-                        SetFontColor(Config.DefaultFontColor, a);
+                        foreach (TextRange a in SplitWordsRange)
+                        {
+                       //     SetFontColor(Config.DefaultFontColor, a);
+                         //   a.ApplyPropertyValue(TextElement.FontWeightProperty, FontWeights.Normal);
+                        }
                     }
-                }
+                    var wordRangePos = get_range(currentCursor, 100, 100);
+                    SplitWordsRange = wordRangePos.Item1;
 
-                SplitWordsRange = get_range(currentCursor,20,20);
+                    for (int i=0; i < wordRangePos.Item2.Count; i++)
+                    {
+                        Canvas.SetLeft(rects[i], wordRangePos.Item2[i][1]);
+                        Canvas.SetTop(rects[i], wordRangePos.Item2[i][0]);
+                        rects[i].Width = wordRangePos.Item2[i][2] - wordRangePos.Item2[i][1];
+                        rects[i].Height = 40;
+                        rects[i].Fill = Brushes.BurlyWood;
+                        rects[i].Visibility = Visibility.Visible;
+                        rects[i].Opacity = 0.3;
+                    }
+                    for (int i = wordRangePos.Item2.Count; i<rects.Count; i++)
+                    {
+                        rects[i].Visibility = Visibility.Hidden;
+                    }
+                    foreach (TextRange a in SplitWordsRange)
+                    {
+                     //   SetFontColor(Config.HeadSelectColor, a);
+                        //a.ApplyPropertyValue(TextElement.FontWeightProperty, FontWeights.Bold);
+                    }
 
-                //setcolor
+
+
+                    
+
+                    //setcolor
+                    /*if (SplitWordsRange.Count > 2)
+                    {
+                        SetFontColor(Config.HeadSelectColor, SplitWordsRange[0]);
+                        SetFontColor(Config.HeadSelectColor, SplitWordsRange[1]);
+                    }*/
+
+
+                    
+                }));
                 
-                foreach (TextRange a in SplitWordsRange)
-                {
-                    SetFontColor(Config.HeadSelectColor, a);
-                }                
                 Canvas.SetLeft(HeadEllipse, currentCursor.X - HeadEllipse.Width / 2);
                 Canvas.SetTop(HeadEllipse, currentCursor.Y - HeadEllipse.Height / 2);
             }
@@ -281,8 +325,8 @@ namespace HeadEdit
             //string pattern = @"[^\W\d](\w|[-']{1,2}(?=\w))*";
             string pattern = @"[^\s]*";
             TextPointer pointer = p;
-            DateTime satrtTime  = System.DateTime.Now;
             //
+            //List<TextRange> res = new List<TextRange>();
             int no = 0;
             while (pointer != null)
             {
@@ -294,13 +338,13 @@ namespace HeadEdit
                 if (pointer.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
                 {
                     string textRun = pointer.GetTextInRun(LogicalDirection.Forward);
-                    // Console.WriteLine("{0},{1}", no, textRun);
                     string[] words = textRun.Split(' ');
                     int startIndex = 0;
                     foreach (var word in words)
                     {
                         if (word.Length > 0)
                         {
+                            //res.Add(new TextRange(pointer.GetPositionAtOffset(startIndex), pointer.GetPositionAtOffset(startIndex + word.Length)));
                             yield return new TextRange(pointer.GetPositionAtOffset(startIndex), pointer.GetPositionAtOffset(startIndex + word.Length));
                         }
                         startIndex += (word.Length + 1);
@@ -318,8 +362,6 @@ namespace HeadEdit
 
                 pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
             }
-            //Console.WriteLine(System.DateTime.Now.Subtract(satrtTime).TotalMilliseconds);
-            //Console.WriteLine("===");
         }
         public void SetBackGround(Color l, TextRange textRange)
         {
@@ -328,30 +370,48 @@ namespace HeadEdit
         }
         private bool in_circle(TextRange t, Point p, int w, int h)
         {
-
             Rect start = t.Start.GetCharacterRect(LogicalDirection.Forward);
             Rect end = t.End.GetCharacterRect(LogicalDirection.Backward);
             if (start.X > (p.X + w) || end.X < (p.X - w)) return false;
             if (start.Y > (p.Y + h) || start.Y < (p.Y - h)) return false;
             return true;
         }
-        private List<TextRange> get_range(Point p, int w, int h) // 上下k行
+        private Tuple<List<TextRange>, List<double[]> > get_range(Point p, int w, int h) // 上下k行
         {
             List<TextRange> select = new List<TextRange>();
+            
             var poz = richTextBox.GetPositionFromPoint(p, true);
-            if (poz == null) return select;
+            if (poz == null) return new Tuple<List<TextRange>, List<double[]> >(select, new List<double[]>());
             TextPointer begin = poz.GetLineStartPosition(-2);
             if (begin == null) begin = poz.DocumentStart;
             TextPointer end = poz.GetLineStartPosition(2);
             List<TextRange> allTextRanges = GetAllWordRanges(begin, end).ToList();
-            foreach (var item in allTextRanges)
+
+
+            //Console.WriteLine(allTextRanges.Count);
+            List<double[]> arrayPos = new List<double[]>();
+            //
+            foreach (var textRange in allTextRanges)
             {
-                if (in_circle(item, p, w, h) == true)
+                Rect head = textRange.Start.GetCharacterRect(LogicalDirection.Forward);
+                Rect tail = textRange.End.GetCharacterRect(LogicalDirection.Backward);
+                if (!(head.X > (p.X + w) || tail.X < (p.X - w)) && !(head.Y > (p.Y + h) || head.Y < (p.Y - h)))
                 {
-                    select.Add(item);
+                    if ((arrayPos.Count == 0) || Math.Abs(arrayPos.Last()[0] - head.Y) > Double.Epsilon)
+                    {
+                        arrayPos.Add(new double[3]);
+                        arrayPos.Last()[0] = head.Y;
+                        arrayPos.Last()[1] = head.X;
+                        arrayPos.Last()[2] = tail.X;
+                    } else
+                    {
+                        arrayPos.Last()[1] = Math.Min(arrayPos.Last()[1], head.X);
+                        arrayPos.Last()[2] = Math.Max(arrayPos.Last()[2], tail.X);
+                    }
+                    select.Add(textRange);
                 }
             }
-            return select;
+            return new Tuple<List<TextRange>, List<double[]> >(select, arrayPos);
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
@@ -381,17 +441,20 @@ namespace HeadEdit
                 richTextBox.CaretPosition = richTextBox.Document.ContentEnd;
 
                 //remove any property of selectrange
-                if (InputBox.Visibility == Visibility.Visible)
+                if (popup.IsOpen)
                 {
-                    InputBox.Visibility = Visibility.Hidden;
-                    for(int i=0;i< SplitWordsRange.Count; i++)
+                    popup.IsOpen = false;
+                    //InputBox.Visibility = Visibility.Hidden;
+                    for (int i=0;i< SplitWordsRange.Count; i++)
                     {
                         SetFontColor(Config.DefaultFontColor, SplitWordsRange[i]);
                     }
-                    if (HighLightRange != null)
+                    if (HighLightRange != null && HighLightRange.Count!=0)
                     {
                         SetBackGroundColor(Config.DefaultBackGroundColor, HighLightRange[NowChoice]);
-                    }                    
+                        HighLightRange[NowChoice].Text = NowChoiceString;
+                    }
+                    
                 }
                 
 
