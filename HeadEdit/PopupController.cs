@@ -50,6 +50,7 @@ namespace HeadEdit
                     }
                     
                 }
+                window.HighLightRange = null;
                 
                 //exitPopup();
             }

@@ -11,7 +11,7 @@ namespace HeadEdit
     class Config
     {
         public static bool debug = false;
-        public static bool useCamera = false;   // false means use mouse move
+        public static bool useCamera =true;   // false means use mouse move
         public static Key calibrationKey = Key.F12;
         public static Key moveKey = Key.F1;
         public static Key editKey = Key.LeftShift;

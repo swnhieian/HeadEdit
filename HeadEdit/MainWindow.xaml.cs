@@ -325,6 +325,8 @@ namespace HeadEdit
                 handleHeadPosition(new Point(mousePos.X / richTextBox.ActualWidth, mousePos.Y / richTextBox.ActualHeight));
                 //Canvas.SetLeft(headEllipse, mousePos.X - headEllipse.Width/2);
                 //Canvas.SetTop(headEllipse, mousePos.Y - headEllipse.Height/2);
+                TextRange range = new TextRange(richTextBox.Document.ContentStart, richTextBox.Document.ContentEnd);
+                string a = range.Text;
             }
         }
 
@@ -416,7 +418,7 @@ namespace HeadEdit
                         {
                             TextPointer headP = lineBegin.GetPositionAtOffset(startIndex);
                             TextPointer tailP = lineBegin.GetPositionAtOffset(startIndex + word.Length);
-                            if (headP.GetLineStartPosition(0).CompareTo(begin) != 0)
+                            if (headP.GetLineStartPosition(0).CompareTo(begin.GetLineStartPosition(0)) != 0)
                             {
                                 beginR = headP.GetCharacterRect(LogicalDirection.Forward);
                                 lineBegin = headP;
@@ -433,6 +435,17 @@ namespace HeadEdit
                             tail.X = beginR.X + (startIndex + word.Length) * Config.fontWidth;
                             tail.Y = beginR.Y;
                             tail.Height = beginR.Height;
+                            if (false && tailP.GetLineStartPosition(0).CompareTo(headP.GetLineStartPosition(0)) != 0) //如果换行
+                            {
+                                Rect tp = tailP.GetCharacterRect(LogicalDirection.Backward);
+                                tail = tp;
+                                if (tp.X > 0)
+                                {                                   
+                                    head.Y = tp.Y;
+                                    head.X = 0;
+                                    head.Height = tp.Height;
+                                }
+                            }
                             if (!(head.X > (p.X + w) || tail.X < (p.X - w)) && !(head.Y > (p.Y + h + head.Height + 5) || head.Y - head.Height < (p.Y - h - head.Height - 5)))
                             {
                                 if ((arrayPos.Count == 0) || Math.Abs(arrayPos.Last()[0] - head.Y) > Double.Epsilon)
@@ -485,6 +498,8 @@ namespace HeadEdit
                 EditFlag = true;
                 updateInterface();
                 e.Handled = true;
+
+
             } else if (e.Key == Config.cancelKey)
             {
                 //return to raw pattern
@@ -515,11 +530,33 @@ namespace HeadEdit
                 
 
                 e.Handled = true;
-                TextRange range = new TextRange(richTextBox.Document.ContentStart, richTextBox.Document.ContentEnd);
-                string a = range.Text;
+                richTextBox.Focus();
+                //richTextBox.SelectAll();
+                //string myText = richTextBox.Selection.Text;
+                TextRange range = new TextRange(this.richTextBox.Document.ContentStart, this.richTextBox.Document.ContentEnd);
+                //string b =range.ToString();
+                string myText = range.Text;
                 //Run run = new Run(range.Text);
-                range.Text = a;
+                range.Text = myText;
+                //range = null;
+
+                //FlowDocument flowDoc = new FlowDocument();
+
+                // Insert an initial paragraph at the beginning of the empty FlowDocument.
+                //flowDoc.Blocks.Add(new Paragraph(new Run(
+                //myText
+                //)));
+                
+                //richTextBox.Document.Blocks.Clear();
+                //richTextBox.Document.Blocks.Add(new Paragraph(new Run(myText)));
+
                 richTextBox.CaretPosition = richTextBox.Document.ContentEnd;
+                HighLightRange = null;
+                SplitWordsRange = null;
+                NowChoice = 0;
+                NowChoiceString = null;
+
+                
 
 
             }
