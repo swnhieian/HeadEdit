@@ -40,6 +40,74 @@ namespace HeadEdit
         public string NowChoiceString;
         List<Rectangle> rects = new List<Rectangle>();
 
+        public void getWrongString(string rightString)
+        {
+            richTextBox.Document.Blocks.Clear();
+            string[] s1 = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
+            string[] sp = rightString.Split(' ');
+            if (sp.Length == 0) { Console.WriteLine("no space"); return; }
+            if(sp.Length == 1) { Console.WriteLine("only one word i dont want to modify"); return; }
+
+            Random c = new Random();
+            int i = c.Next(sp.Length); // change i
+            int len = sp[i].Length;
+            int methodKind =c.Next(3); // which method to use
+            int index = c.Next(s1.Length); // the number of char
+            string wrong;
+            if (methodKind == 0)
+            {
+                Console.WriteLine("Add");
+                wrong = sp[i].Substring(0, i + 1) + s1[index] + sp[i].Substring(i + 1, rightString.Length - i - 1);
+            }
+            if (methodKind == 1)
+            {
+                Console.WriteLine("Modify"); 
+                wrong = sp[i].Substring(0, i) + s1[index] + sp[i].Substring(i + 1, rightString.Length - i-1);
+
+
+            }
+            if (methodKind == 2)
+            {
+                Console.WriteLine("Del");
+                wrong = sp[i].Substring(0, i) +  sp[i].Substring(i+1, rightString.Length - i - 1);
+            }
+            string fault = sp[0];
+            Run zero = new Run(sp[0]);
+            if (i == 0)
+            {
+                // set your background
+                Paragraph par = new Paragraph(zero);
+
+                for (int k = 1; k <sp.Length; k++)
+                {
+                    fault = string.Concat(fault, string.Concat(" ", sp[k]));
+                }
+                Run af = new Run(fault);
+                par.Inlines.Add(af);return;
+            }
+            Paragraph para = new Paragraph(zero);
+
+            for(int k = 1; k < i; k++)
+            {
+                fault = string.Concat(fault,string.Concat(" ",sp[k]));
+            }
+            Run before = new Run(fault);
+            // set your background
+
+            para.Inlines.Add(before); // sentences before changed word
+            Run mid = new Run(sp[i]);
+            // set your background
+            para.Inlines.Add(mid);
+            if (i == sp.Length - 1) return; // is the last one of sp
+
+            fault = sp[i + 1];
+            for(int k = i + 1; k < sp.Length; k++)
+            {
+                fault = string.Concat(fault, string.Concat(" ", sp[k]));
+            }
+            Run end = new Run(fault);
+            para.Inlines.Add(end);
+        }
 
         public bool EditFlag
         {
