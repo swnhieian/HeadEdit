@@ -562,13 +562,7 @@ namespace HeadEdit
 
                 e.Handled = true;
                 richTextBox.Focus();
-                //richTextBox.SelectAll();
-                //string myText = richTextBox.Selection.Text;
-                TextRange range = new TextRange(this.richTextBox.Document.ContentStart, this.richTextBox.Document.ContentEnd);
-                //string b =range.ToString();
-                string myText = range.Text;
-                
-                range.Text = myText;
+                ClearRun();                
                 //range = null;
 
                 //FlowDocument flowDoc = new FlowDocument();
@@ -607,7 +601,7 @@ namespace HeadEdit
             {
                 startFlag = true;
                 e.Handled = true;
-                //do nothing
+                ClearRun();
             }
 
         }
@@ -813,6 +807,15 @@ namespace HeadEdit
                 Paragraph paragraph = new Paragraph(new Run(RawString));
                 richTextBox.Document.Blocks.Add(paragraph);
             }
+        }
+
+        private void ClearRun()
+        {
+            TextRange range = new TextRange(this.richTextBox.Document.ContentStart, this.richTextBox.Document.ContentEnd);
+            //string b =range.ToString();
+            string myText = range.Text;
+
+            range.Text = myText;
         }
     }
 
