@@ -132,6 +132,9 @@ namespace HeadEdit
 
                Run end = new Run(fault);
                  para.Inlines.Add(end);
+
+            richTextBox.Document.Blocks.Clear();
+            richTextBox.Document.Blocks.Add(para);
         }
 
         public string RawString;  //Raw text from "text.txt"
