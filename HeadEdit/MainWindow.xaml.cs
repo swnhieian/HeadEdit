@@ -131,10 +131,10 @@ namespace HeadEdit
                Run end = new Run(fault);
                  para.Inlines.Add(end);
         }
-=======
+
         public string RawString;  //Raw text from "text.txt"
 
->>>>>>> 97b769b5ed20a99f1838b52d2c5dccbb5f605aa0
+
 
         public bool EditFlag
         {
