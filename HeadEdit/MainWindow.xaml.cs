@@ -424,8 +424,8 @@ namespace HeadEdit
                 handleHeadPosition(new Point(mousePos.X / richTextBox.ActualWidth, mousePos.Y / richTextBox.ActualHeight));
                 //Canvas.SetLeft(headEllipse, mousePos.X - headEllipse.Width/2);
                 //Canvas.SetTop(headEllipse, mousePos.Y - headEllipse.Height/2);
-                TextRange range = new TextRange(richTextBox.Document.ContentStart, richTextBox.Document.ContentEnd);
-                string a = range.Text;
+                //TextRange range = new TextRange(richTextBox.Document.ContentStart, richTextBox.Document.ContentEnd);
+                //string a = range.Text;
             }
         }
 
@@ -686,6 +686,7 @@ namespace HeadEdit
                     rects[i].Visibility = Visibility.Hidden;
                 }
 
+                getWrongString(RawString);
                 //Run next task
             }
             else if(startFlag==false&& e.Key ==Config.TaskStart)
