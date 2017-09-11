@@ -121,6 +121,7 @@ namespace HeadEdit
             //*********************
             mid.Background = Config.WrongWordTipColor;
             WrongWordBlock.Text = sp[i];
+            //********************
 
 
             para.Inlines.Add(mid);
