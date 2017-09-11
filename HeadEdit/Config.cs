@@ -20,6 +20,7 @@ namespace HeadEdit
         public static Key selectNext = Key.Tab;
         public static Key changeMode = Key.F4;
         public static Key NextTask = Key.F11;
+        public static Key TaskStart = Key.Space;
         public static Brush FontColor = Brushes.Red;
         public static Brush BackGroundColor = new SolidColorBrush(Color.FromArgb(205, 0, 0, 128));
         public static Brush DefaultFontColor = Brushes.Black;

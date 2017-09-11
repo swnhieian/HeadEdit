@@ -34,6 +34,7 @@ namespace HeadEdit
         private bool moveFlag = false;
         private bool editFlag = false;
         private bool changeModeFlag = true;
+        private bool startFlag = true;
         private int TaskNumber = 1;  //当前执行第几个任务
 
         //public List<TextRange> HeadSelectRange;
@@ -144,6 +145,7 @@ namespace HeadEdit
         private void handleHeadPosition(Object para)
         {
             if (changeModeFlag == false) return;
+            if (startFlag == false) return;
             Point headPos = calibration.parsePoint((Point)para);
             currentCursor = headPosToCanvasPos(headPos);
             updateInterface();
@@ -490,6 +492,11 @@ namespace HeadEdit
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            if (startFlag == false && e.Key != Config.TaskStart)
+            {
+                e.Handled = true;
+                return;
+            }
             if(e.Key == Config.changeMode)
             {
                 if(changeModeFlag == false)
@@ -588,9 +595,18 @@ namespace HeadEdit
             {
                 Tips.Text = "Task " + TaskNumber.ToString();
                 TaskNumber++;
+                startFlag = false;
+                for (int i = 0; i < rects.Count; i++)
+                {
+                    rects[i].Visibility = Visibility.Hidden;
+                }
+
                 //Run next task
             }
+            else if(startFlag==false&& e.Key ==Config.TaskStart)
             {
+                startFlag = true;
+                e.Handled = true;
                 //do nothing
             }
 
