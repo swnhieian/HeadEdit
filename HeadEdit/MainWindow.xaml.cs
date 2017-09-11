@@ -44,7 +44,6 @@ namespace HeadEdit
         public string NowChoiceString;
         List<Rectangle> rects = new List<Rectangle>();
 
-<<<<<<< HEAD
          public void getWrongString(string rightString)
         {
             // richTextBox.Document.Blocks.Clear();
