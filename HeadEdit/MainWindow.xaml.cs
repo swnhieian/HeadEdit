@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -32,6 +33,8 @@ namespace HeadEdit
         //flag
         private bool moveFlag = false;
         private bool editFlag = false;
+        private bool changeModeFlag = true;
+        private int TaskNumber = 1;  //当前执行第几个任务
 
         //public List<TextRange> HeadSelectRange;
         public List<TextRange> SplitWordsRange;
@@ -39,6 +42,8 @@ namespace HeadEdit
         public int NowChoice = 0;//nowchoice of highlightrange
         public string NowChoiceString;
         List<Rectangle> rects = new List<Rectangle>();
+
+        public string RawString;  //Raw text from "text.txt"
 
 
         public bool EditFlag
@@ -71,6 +76,7 @@ namespace HeadEdit
         {
             Console.WriteLine(getEditDistance("language", "languages"));
             InitializeComponent();
+            LoadTextFile(this.richTextBox, "text.txt");
             this.WindowState = WindowState.Maximized;
             
             //start a background thread which can receive head position from server
@@ -117,12 +123,11 @@ namespace HeadEdit
                 rects[i].Opacity = 0.3;
             }
             richTextBox.FontFamily = Config.fontFamily;
-            
+
             //System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
             //dispatcherTimer.Tick += dispatcherTimer_Tick;
             //dispatcherTimer.Interval = new TimeSpan(0, 0, 5);
             //dispatcherTimer.Start();
-
         }
         /*private void dispatcherTimer_Tick(object sender, EventArgs e)
         {
@@ -138,6 +143,7 @@ namespace HeadEdit
         */
         private void handleHeadPosition(Object para)
         {
+            if (changeModeFlag == false) return;
             Point headPos = calibration.parsePoint((Point)para);
             currentCursor = headPosToCanvasPos(headPos);
             updateInterface();
@@ -484,6 +490,24 @@ namespace HeadEdit
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            if(e.Key == Config.changeMode)
+            {
+                if(changeModeFlag == false)
+                {
+                    LoadTextFile(this.richTextBox, "text.txt");
+                    changeModeFlag = true;
+                }
+                else
+                {
+                    LoadTextFile(this.richTextBox, "text.txt");
+                    changeModeFlag = false;
+                    for (int i = 0; i < rects.Count; i++)
+                    {
+                        rects[i].Visibility = Visibility.Hidden;
+                    }
+                }
+            }
+            if (changeModeFlag == false) return;
             if (e.Key == Config.calibrationKey)
             {
                 calibration.startCalibrate();
@@ -536,17 +560,17 @@ namespace HeadEdit
                 TextRange range = new TextRange(this.richTextBox.Document.ContentStart, this.richTextBox.Document.ContentEnd);
                 //string b =range.ToString();
                 string myText = range.Text;
-                //Run run = new Run(range.Text);
+                
                 range.Text = myText;
                 //range = null;
 
                 //FlowDocument flowDoc = new FlowDocument();
-
+                
                 // Insert an initial paragraph at the beginning of the empty FlowDocument.
                 //flowDoc.Blocks.Add(new Paragraph(new Run(
                 //myText
                 //)));
-                
+                //Run run = new Run(range.Text);
                 //richTextBox.Document.Blocks.Clear();
                 //richTextBox.Document.Blocks.Add(new Paragraph(new Run(myText)));
 
@@ -559,6 +583,12 @@ namespace HeadEdit
                 
 
 
+            }
+            else if(e.Key == Config.NextTask)
+            {
+                Tips.Text = "Task " + TaskNumber.ToString();
+                TaskNumber++;
+                //Run next task
             }
             {
                 //do nothing
@@ -757,6 +787,19 @@ namespace HeadEdit
             // a  b  c  d e f g h i j k l m n o p q r s t u v w x y z
              { 1, 3, 3, 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,3,3,3,3,1,3,0 },//z
          };
+
+        private void LoadTextFile(RichTextBox richTextBox, string filename)
+        {
+            richTextBox.Document.Blocks.Clear();
+            using (StreamReader streamReader = File.OpenText(filename))
+            {
+                RawString = streamReader.ReadToEnd();
+                Paragraph paragraph = new Paragraph(new Run(RawString));
+                richTextBox.Document.Blocks.Add(paragraph);
+            }
+        }
     }
+
+
     
 }
