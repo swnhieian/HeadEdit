@@ -118,12 +118,13 @@ namespace HeadEdit
 
 
             para.Inlines.Add(before); // sentences before changed word
+
            
             Run mid = new Run(string.Concat(" ",sp[i]));
             //*********************
             mid.Background = Config.WrongWordTipColor;
             WrongWordBlock.Text = sp[i];
-            //********************
+
 
 
             para.Inlines.Add(mid);
