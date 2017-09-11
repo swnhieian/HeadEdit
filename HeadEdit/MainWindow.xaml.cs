@@ -118,7 +118,10 @@ namespace HeadEdit
 
             para.Inlines.Add(before); // sentences before changed word
             Run mid = new Run(sp[i]);
-            mid.Background = Brushes.AliceBlue;
+            //*********************
+            mid.Background = Config.WrongWordTipColor;
+            WrongWordBlock.Text = sp[i];
+
 
             para.Inlines.Add(mid);
             if (i == sp.Length - 1) return; // is the last one of sp
