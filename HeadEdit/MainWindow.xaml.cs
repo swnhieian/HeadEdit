@@ -91,7 +91,7 @@ namespace HeadEdit
              Run zero = new Run(sp[0]);
             if (i == 0)
             {
-                //set your background
+                 zero.Background = Brushes.AliceBlue;
                  Paragraph par = new Paragraph(zero);
 
                 for (int k = 1; k < sp.Length; k++)
@@ -108,16 +108,19 @@ namespace HeadEdit
             for (int k = 1; k < i; k++)
             {
                 fault = string.Concat(fault, string.Concat(" ", sp[k]));
+             
             }
-          //  Console.WriteLine(fault);
+            //  Console.WriteLine(fault);
             string f2 = "";
                Run before = new Run(fault);
-            // set your background
+            
 
-                 para.Inlines.Add(before); // sentences before changed word
-                Run mid = new Run(sp[i]);
-            // set your background
-                 para.Inlines.Add(mid);
+
+            para.Inlines.Add(before); // sentences before changed word
+            Run mid = new Run(sp[i]);
+            mid.Background = Brushes.AliceBlue;
+
+            para.Inlines.Add(mid);
             if (i == sp.Length - 1) return; // is the last one of sp
 
 
