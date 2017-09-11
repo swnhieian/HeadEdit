@@ -8,6 +8,6 @@ namespace HeadEdit
 {
     class word
     {
-        private 
+        //private 
     }
 }
