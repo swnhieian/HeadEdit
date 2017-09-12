@@ -30,6 +30,13 @@ namespace HeadEdit
             this.type = type;
             this.time = time;
         }
+        public LogRecord(LogType type, DateTime time ,string wrongWord ,string targetWord)
+        {
+            this.type = type;
+            this.time = time;
+            this.wrongWord = wrongWord;
+            this.targetWord = targetWord;
+        }
 
         public override string ToString()
         {
