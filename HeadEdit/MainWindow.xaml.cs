@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -59,9 +60,14 @@ namespace HeadEdit
             int index = c.Next(s1.Length); // the number of char
             int replace_i = c.Next(len);
             string wrong = "oooo";
+            TargetWordBlock.Text = sp[i];
                Console.WriteLine(sp[i]);
               Console.WriteLine(s1[index]);
              Console.WriteLine(replace_i);
+            if (len <= 1 && methodKind == 2)
+            {
+                methodKind = c.Next(2);
+            }
             if (methodKind == 0)
             {
                 Console.WriteLine("Add");
@@ -142,6 +148,7 @@ namespace HeadEdit
 
             richTextBox.Document.Blocks.Clear();
             richTextBox.Document.Blocks.Add(para);
+
         }
 
         public string RawString;  //Raw text from "text.txt"
@@ -223,6 +230,8 @@ namespace HeadEdit
                 rects[i].Opacity = 0.3;
             }
             richTextBox.FontFamily = Config.fontFamily;
+            double width = GetScreenSize("X", Config.fontFamily, Config.richTextBoxFontSize, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal).Width;
+            Config.fontWidth = width;
 
             //System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
             //dispatcherTimer.Tick += dispatcherTimer_Tick;
@@ -297,7 +306,7 @@ namespace HeadEdit
             //定义匹配阈值
             List<TextRange> HighLightRange = new List<TextRange>();
             double threshold = 5;
-            if (keyword.Length <= 2) threshold = 3;
+            if (keyword.Length <= 4) threshold = 3;
             //            else if(keyword.Length<=4) threshold = keyword.Length-1;
             //            else if (keyword.Length <= 6) threshold = keyword.Length - 2;
             //            else threshold = keyword.Length - 2;
@@ -493,6 +502,15 @@ namespace HeadEdit
             if (start.Y > (p.Y + h) || start.Y < (p.Y - h)) return false;
             return true;
         }
+        public static Size GetScreenSize(string text, FontFamily fontFamily, double fontSize, FontStyle fontStyle, FontWeight fontWeight, FontStretch fontStretch)
+        {
+            fontFamily = fontFamily ?? new TextBlock().FontFamily;
+            fontSize = fontSize > 0 ? fontSize : new TextBlock().FontSize;
+            var typeface = new Typeface(fontFamily, fontStyle, fontWeight, fontStretch);
+            var ft = new FormattedText(text ?? string.Empty, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface, fontSize, Brushes.Black);
+            return new Size(ft.Width, ft.Height);
+        }
+
         private Tuple<List<TextRange>, List<double[]>> get_range(Point p, double w, double h) // 上下k行
         {
             List<TextRange> select = new List<TextRange>();
@@ -500,16 +518,22 @@ namespace HeadEdit
             var pos = richTextBox.GetPositionFromPoint(p, true);
             if (pos == null) return new Tuple<List<TextRange>, List<double[]>>(select, new List<double[]>());
             TextPointer begin = pos.GetLineStartPosition(-1);
-            //TextPointer lastEnd = poz.DocumentEnd.GetLineStartPosition(-3);
+          //  TextPointer lastEnd = poz.DocumentEnd.GetLineStartPosition(-3);
             if (begin == null) begin = pos.DocumentStart;
+            if (begin.CompareTo(pos.DocumentEnd) < -1)
+            {
+                begin = pos.DocumentStart;
+            }
             /*if (begin != null && lastEnd != null && begin.CompareTo(lastEnd) > 0)
             {
                 begin = lastEnd;
             }*/
             TextPointer end = pos.GetLineStartPosition(1);
+            begin = begin.GetPositionAtOffset(2);  //?? Magic 2
             Rect beginR = begin.GetCharacterRect(LogicalDirection.Forward);
             List<double[]> arrayPos = new List<double[]>();
             TextPointer lineBegin = begin;
+            //Console.WriteLine("========================");
             while (begin != null)
             {
                 if (end != null && begin.CompareTo(end) > -1) { break; }
@@ -523,11 +547,22 @@ namespace HeadEdit
                     {
                         if (word.Length > 0)
                         {
-                            TextPointer headP = lineBegin.GetPositionAtOffset(startIndex);
-                            TextPointer tailP = lineBegin.GetPositionAtOffset(startIndex + word.Length);
-                            if (headP.GetLineStartPosition(0).CompareTo(begin.GetLineStartPosition(0)) != 0)
+                           // Console.WriteLine("startIndes:{0}, word.length:{1}", startIndex, word.Length);
+                            TextPointer headP = lineBegin.GetPositionAtOffset(startIndex, LogicalDirection.Forward);
+                            TextPointer tailP = lineBegin.GetPositionAtOffset(startIndex + word.Length, LogicalDirection.Forward);
+                           // Console.WriteLine(new TextRange(headP, tailP).Text + "|");
+                            //Console.WriteLine(new TextRange(headP, lineBegin.GetPositionAtOffset(startIndex+word.Length+1, LogicalDirection.Forward)).Text + "|");
+                            //Console.WriteLine(new TextRange(headP, lineBegin.GetPositionAtOffset(startIndex + word.Length + 2, LogicalDirection.Forward)).Text + "|");
+                            bool dealed = false;
+                           // Console.WriteLine("{0}", headP.GetLineStartPosition(0).CompareTo(lineBegin.GetLineStartPosition(0)));
+                            if (headP.GetLineStartPosition(0).CompareTo(lineBegin.GetLineStartPosition(0)) != 0 /*||
+                                (headP.GetLineStartPosition(0).CompareTo(lineBegin.GetLineStartPosition(0)) == 0 &&
+                                beginR.X + (startIndex + word.Length) * Config.fontWidth > richTextBox.ActualWidth)*/)
                             {
-                                beginR = headP.GetCharacterRect(LogicalDirection.Forward);
+                                dealed = true;
+                                //beginR = headP.GetCharacterRect(LogicalDirection.Forward);
+                                beginR.Y += beginR.Height;
+                                beginR.X = 0;
                                 lineBegin = headP;
                                 startIndex = 0;
                             }
@@ -542,17 +577,26 @@ namespace HeadEdit
                             tail.X = beginR.X + (startIndex + word.Length) * Config.fontWidth;
                             tail.Y = beginR.Y;
                             tail.Height = beginR.Height;
-                            if (false && tailP.GetLineStartPosition(0).CompareTo(headP.GetLineStartPosition(0)) != 0) //如果换行
+                            if (tailP.GetLineStartPosition(0).CompareTo(headP.GetLineStartPosition(0)) != 0 && !dealed) //如果换行
                             {
-                                Rect tp = tailP.GetCharacterRect(LogicalDirection.Backward);
-                                tail = tp;
-                                if (tp.X > 0)
-                                {
-                                    head.Y = tp.Y;
-                                    head.X = 0;
-                                    head.Height = tp.Height;
-                                }
+                                //Rect tp = tailP.GetCharacterRect(LogicalDirection.Backward);
+                                //tail = tp;
+                                head.X = 0;
+                                head.Y += head.Height;
+                                tail.X = (word.Length * Config.fontWidth);
+                                tail.Y += head.Height;
+                                lineBegin = tailP;
+                                beginR.Y += head.Height;
+                                beginR.X = tail.X;
+                                startIndex = -(word.Length);
+                                //if (tp.X > 0)
+                                //{
+                                //    head.Y = tp.Y;
+                                //    head.X = 0;
+                                //    head.Height = tp.Height;
+                                //}
                             }
+                            //Console.WriteLine("{0},{1},{2}, {3}", word, head.X, tail.X, tailP.GetLineStartPosition(0).CompareTo(headP.GetLineStartPosition(0)));
                             if (!(head.X > (p.X + w) || tail.X < (p.X - w)) && !(head.Y > (p.Y + h + head.Height + 5) || head.Y - head.Height < (p.Y - h - head.Height - 5)))
                             {
                                 if ((arrayPos.Count == 0) || Math.Abs(arrayPos.Last()[0] - head.Y) > Double.Epsilon)
@@ -585,7 +629,7 @@ namespace HeadEdit
             }*/
             //List<TextRange> allTextRanges = GetAllWordRanges(begin, end).ToList();
 
-
+           // Console.WriteLine(arrayPos);
             return new Tuple<List<TextRange>, List<double[]>>(select, arrayPos);
         }
 
@@ -738,11 +782,11 @@ namespace HeadEdit
                 {
                     if (i - 1 >= 0 && d[i - 1, j] < Double.MaxValue)
                     {
-                        d[i, j] = Math.Min(d[i - 1, j] + 1, d[i, j]);
+                        d[i, j] = Math.Min(d[i - 1, j] + 2, d[i, j]);
                     }
                     if (j - 1 >= 0 && d[i, j - 1] < Double.MaxValue)
                     {
-                        d[i, j] = Math.Min(d[i, j - 1] + 1, d[i, j]);
+                        d[i, j] = Math.Min(d[i, j - 1] + 2, d[i, j]);
                     }
                     if (i - 1 >= 0 && j - 1 >= 0 && d[i - 1, j - 1] < Double.MaxValue)
                     {
@@ -825,7 +869,8 @@ namespace HeadEdit
             int x2 = Char.ToLower(b) - 'a';
             if (x1 < 0 || x1 > 25 || x2 < 0 || x2 > 25)
             {
-                return 3;
+                if (x1 == x2) return 0;
+                return 2;
             }
             else
             {
