@@ -31,6 +31,7 @@ namespace HeadEdit
         private Ellipse headEllipse;
         private PopupController popupController;
         private Point currentCursor;
+        public Log log;
         //flag
         private bool moveFlag = false;
         private bool editFlag = false;
@@ -130,6 +131,7 @@ namespace HeadEdit
             //*********************
             mid.Background = Config.WrongWordTipColor;
             WrongWordBlock.Text = sp[i];
+            //********************
 
 
 
@@ -185,6 +187,7 @@ namespace HeadEdit
             InitializeComponent();
             LoadTextFile(this.richTextBox, "text.txt");
             this.WindowState = WindowState.Maximized;
+            
 
             //start a background thread which can receive head position from server
             Thread headPositionThread = new Thread(() =>
@@ -200,6 +203,7 @@ namespace HeadEdit
             //initalize some variables
             currentCursor = new Point(0, 0);
             popupController = new PopupController(this);
+            log = new Log(this,DateTime.Now);
             richTextBox.FontSize = Config.richTextBoxFontSize;
             calibration = new Calibration();
             HeadEllipse = new Ellipse()
