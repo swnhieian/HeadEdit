@@ -30,5 +30,6 @@ namespace HeadEdit
         public static double richTextBoxFontSize = 30;
         public static double fontWidth = 1807.93774319066 / 99.0;
         public static FontFamily fontFamily = new FontFamily("Courier New");
+        public static int headMoveMode = 0; //0 means absolute, 1 means relative
     }
 }
